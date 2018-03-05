@@ -7,13 +7,13 @@ close(gcf)
 %also set up plate length
 % M for x; N for y;
 lx= pi;
-ly=pi;
+ly=lx;
 %set up nodes here
 %MAKE SURE THAT IT IS EVEN
-m=1000;
+m=100;
 n=m;
 dx= lx/(m+1);
-dy= ly/(n+1);
+dy= dx;
 %Boundary Conditions Defined here
 u0=0;
 uL=0;
@@ -21,7 +21,7 @@ v0=0;
 vL=0;
 %determining how many iterations to do to solver using 
 %Gauss Seidel
-iteration=4000;
+iteration=1000;
 %defining x & y intervals
 
 x=[dx:dx:lx-dx];
@@ -36,7 +36,7 @@ for p=1:length(x)
       solF(p,q)= -2.*M.*sin(M.*x(p)).*cosh(M.*y(q));
     end
 end
-surf(x,y,solU)
+surf(x,y,solU);
 %given f in del2u=f
 
 surf(x,y,solF);
@@ -44,54 +44,43 @@ surf(x,y,solF);
 %setting up u properly:
 u(m,n)=0;
 u_new(m,n)=0;
-error(m,n)=0;
+L1_error=0;
+error=0;
+
+%This nested loop solves for the first u values
 %to not compute too much in a loop, will do the following 
 l= dx*dy*2*M;
-
 for j=1:n
     for i=1:m
        %checking to see if at boundaries
-        if i==1
-           if j==1
-             %will be at CORNER (0,0)  
-                u(i,j)=(l*sin(M*i*dx)*cosh(M*j*dy) -u0-v0-u(i+1,j) -u(i,j+1))/-4;
-           elseif j==n % will be at CORNER (0,ly)
+        if (i==1) && (j==1) %will be at CORNER (0,0)
+           u(i,j)=(l*sin(M*i*dx)*cosh(M*j*dy) -u0-v0-u(i+1,j) -u(i,j+1))/-4;
+        
+        elseif (i==1) && (j==n) % will be at CORNER (0,ly)
                 u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-v0-u(i+1,j) -uL)/-4
-           else %will be at LINE (0,y)
-                u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-v0-u(i+1,j) -u(i,j+1))/-4;
-           end
-        end
+           
+        elseif ( i==m) &&(j==n) % will be at CORNER (lx,ly)
+             u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-u(i-1,j)-uL -vL)/-4;
         
-        if (j==1) && ((i~=1) && (i~=m)) % now will at LINE at (x !=0,0)
-            u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u0-u(i-1,j)-u(i+1,j) -u(i,j+1))/-4;
-        end
-         
-        if i==m
-            if j==n
-                %will be at CORNER (lx,ly)
-                 u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-u(i-1,j)-uL -vL)/-4;
-            elseif j==1
-                % will be at CORNER (lx,0)
-                u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u0-u(i-1,j)-vL -u(i,j+1))/-4;
-            else %now at LINE (lx,y)
-                u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-u(i-1,j)-vL -u(i,j+1))/-4;
-            end
-        end
+        elseif (i==m) && (j==1) % will be at CORNER (lx,0)
+             u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u0-u(i-1,j)-vL -u(i,j+1))/-4;
         
-         
-         
-         if (j==n) && ((i~=1) && (i~=m))  % will be at LINE (x,ly)
-            u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-u(i-1,j)-u(i+1,j) -uL)/-4;
-         end
-         
-         %end of boundary check; else will be within space
+        elseif (i==1)%will be at LINE (0,y)
+             u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-v0-u(i+1,j) -u(i,j+1))/-4;
         
-        if ((i~=1) && (i~=m) && (j~=1) && (j~=n)) %checks to see if index does not depend on boundary    
+        elseif (i==m) % will be at LINE (lx,y)
+             u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-u(i-1,j)-vL -u(i,j+1))/-4;
+        
+        elseif(j==1) % will be at LINE (x,0)
+             u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u0-u(i-1,j)-u(i+1,j) -u(i,j+1))/-4;
+        
+        elseif(j==n) % will be at LINE (x,ly)
+             u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-u(i-1,j)-u(i+1,j) -uL)/-4;
+        %end of boundary check
+        else  %will not depend on boundaries for answers
             u(i,j)= (l*sin(M*i*dx)*cosh(M*j*dy) -u(i,j-1)-u(i-1,j)-u(i+1,j) -u(i,j+1))/-4;
         end
-        %End of solving for u at boundaries & inner space area
-        
-     end
+   end
 end
 u_new=u;
 %First guess done; will use gauss-seidel iteratively to get better
@@ -139,11 +128,11 @@ l=-.25*dx*dy*-2*M;
      solU;
      for i=1:m
          for j=1:n
-             error(i,j)= abs((u(i,j)-solU(i,j))/solU(i,j))*100;
+             error= abs(u(i,j)-solU(i,j))
+           L1_error=L1_error+error
          end
      end
-     error;
-     naive_average_error= sum(sum(error))/(n*m)
+     
      k=surf(x,y,solU)
      %makes true solution a little transparent so can see both surfaces
      % easier
