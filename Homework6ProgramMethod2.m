@@ -11,7 +11,7 @@ ly= pi;
 
 %set up nodes here
 %MAKE SURE THAT IT IS EVEN
-m=100;
+m=10;
 n=m;
 dx= lx/(m+1);
 dy= ly/(n+1);
@@ -22,7 +22,7 @@ v0=0;
 vL=0;
 %determining how many iterations to do to solver using 
 %Gauss Seidel
-iteration=600;
+iteration=3000;
 %defining x & y intervals
 
 x=[0:dx:lx];
@@ -57,8 +57,8 @@ u_new(m+2,n+2)=0;
 %to not compute too much in a loop, will do the following 
 l1= -dx*dy*2*M;
 for s=1:iteration
-    for j=2:n+1
-        for i=2:m+1
+    for j=2:n+1 %done this way to ignore the bc entries on the matrix
+        for i=2:m+1 % see above
        
        u(i,j)= (l1*sin(M*(i-1)*dx)*cosh(M*(j-1)*dy) -u_new(i,j-1)-u_new(i-1,j)-u(i+1,j) -u(i,j+1))/-4;
         u_new(i,j)=u(i,j); % new value assigned as in gauss-seidel
@@ -70,17 +70,17 @@ end
 
 %Calculating the L1 error
      for i=2:m+1
-         for j=2:n+2
+         for j=2:n+1
              error= abs(u(i,j)-solU(i,j));
            L1_error=L1_error+error;
          end
      end
      L1_error= L1_error/(m*n)
-     k=surf(x,y,solU)
-     %makes true solution a little transparent so can see both surfaces
-     % easier
-     alpha(k,.4)
-     hold on
+%      k=surf(x,y,solU)
+%      %makes true solution a little transparent so can see both surfaces
+%      % easier
+%      alpha(k,.4)
+%      hold on
      surf(x,y,u)
      
      %plotting random values of the approximated u and the Closed-form solU
